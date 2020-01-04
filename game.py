@@ -1,4 +1,4 @@
-from app import app
+from app import socketio, app
 from app.models import *
 
 
@@ -7,4 +7,4 @@ def make_shell_context():
     return {'db': db, 'User': User}
 
 
-app.run(host='0.0.0.0', port=8080)
+socketio.run(app, host='0.0.0.0', port=8080)

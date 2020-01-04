@@ -8,3 +8,5 @@ SQLAlchemy
 passlib
 bcrypt
 flask-login
+flask-socketio
+eventlet

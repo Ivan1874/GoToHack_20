@@ -1,15 +1,20 @@
+import copy
 import json
+from threading import Timer
 
+import eventlet
 from flask import render_template, flash, redirect, url_for, request, send_from_directory
 from flask_login import current_user, login_user, logout_user, login_required
+from flask_socketio import emit
 from werkzeug.urls import url_parse
-from game_service import field
 
-from app import app
+from app import app, socketio
 from app.forms import LoginForm, RegisterForm, IndexForm
 from app.models import *
+from game_service import tick, field, bots_position
 
 current_user: User
+eventlet.monkey_patch()
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -74,6 +79,32 @@ def game():
     return render_template('game.html')
 
 
-@app.route('/api/get_initial_config', methods=['POST'])
-def get_initial_config():
-    return json.dumps({'height': 16, 'width': 16, 'field': field})
+clients = {}
+
+
+def do_update():
+    tick()
+    for user in clients:
+        data = clients[user]
+        updates = []
+        for j in range(len(data['field'])):
+            for i in range(len(data['field'][j])):
+                if field[i][j] != data['field'][i][j]:
+                    updates.append((i, j, field[i][j]))
+        socketio.emit('update', json.dumps({'updates': updates, 'bots': bots_position}), room=user)
+        data['field'] = copy.deepcopy(field)
+    Timer(1, lambda: eventlet.spawn(do_update)).start()
+
+
+@socketio.on('connect')
+def handle_message():
+    emit('initial', json.dumps({'height': 16, 'width': 16, 'field': field}))
+    clients[request.sid] = {'field': copy.deepcopy(field)}
+
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    del clients[request.sid]
+
+
+Timer(1, lambda: eventlet.spawn(do_update)).start()

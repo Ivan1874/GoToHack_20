@@ -63,6 +63,7 @@
                     src="{{ url_for('send_static', path='js/ace/ext-language_tools.js') }}"></script>
             <script type="text/javascript" src="{{ url_for('send_static', path='js/brython.js') }}"></script>
             <script type="text/javascript" src="{{ url_for('send_static', path='js/brython_stdlib.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('send_static', path='js/socket.io.js') }}"></script>
             <script type="text/javascript">
                 $(document).ready(function () {
                     {% with messages = get_flashed_messages() %}
