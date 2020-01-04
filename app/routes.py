@@ -11,7 +11,7 @@ from werkzeug.urls import url_parse
 from app import app, socketio
 from app.forms import LoginForm, RegisterForm, IndexForm
 from app.models import *
-from game_service import tick, field, bots_position
+from game_service import tick, field, bots_position, width, height
 
 current_user: User
 eventlet.monkey_patch()
@@ -84,21 +84,25 @@ clients = {}
 
 def do_update():
     tick()
-    for user in clients:
-        data = clients[user]
-        updates = []
-        for j in range(len(data['field'])):
-            for i in range(len(data['field'][j])):
-                if field[i][j] != data['field'][i][j]:
-                    updates.append((i, j, field[i][j]))
-        socketio.emit('update', json.dumps({'updates': updates, 'bots': bots_position}), room=user)
-        data['field'] = copy.deepcopy(field)
-    Timer(1, lambda: eventlet.spawn(do_update)).start()
+    try:
+        for user in clients:
+            data = clients[user]
+            updates = []
+            for y in range(len(data['field'])):
+                for x in range(len(data['field'][y])):
+                    if field[y][x] != data['field'][y][x]:
+                        updates.append((x, y, field[y][x]))
+
+            socketio.emit('update', json.dumps({'updates': updates, 'bots': bots_position}), room=user)
+            data['field'] = copy.deepcopy(field)
+    except RuntimeError:
+        print('Err')
+    Timer(0.4, lambda: eventlet.spawn(do_update)).start()
 
 
 @socketio.on('connect')
 def handle_message():
-    emit('initial', json.dumps({'height': 16, 'width': 16, 'field': field}))
+    emit('initial', json.dumps({'height': height, 'width': width, 'field': field}))
     clients[request.sid] = {'field': copy.deepcopy(field)}
 
 
@@ -107,4 +111,4 @@ def handle_disconnect():
     del clients[request.sid]
 
 
-Timer(1, lambda: eventlet.spawn(do_update)).start()
+Timer(0.5, lambda: eventlet.spawn(do_update)).start()

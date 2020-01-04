@@ -1,4 +1,4 @@
-import json
+from math import pi
 
 from browser import document, window
 from javascript import JSON
@@ -45,16 +45,31 @@ class Game(Singleton):
 
     @staticmethod
     def draw(_):
-        for update in Game().updates:
+        game = Game()
+        for update in game.updates:
             x = update[0]
             y = update[1]
             data = update[2]
-            Game().ctx.fillStyle = COLORS[data]
-            Game().ctx.fillRect(x * PIXEL_WIDTH, y * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
-            # Game().ctx.beginPath()
-            # Game().ctx.rect(update['x'] * PIXEL_WIDTH, update['y'] * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
-            # Game().ctx.stroke()
-            Game().current_field[x][y] = data
+            game.ctx.fillStyle = COLORS[data]
+            game.ctx.fillRect(x * PIXEL_WIDTH, y * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
+            # game.ctx.beginPath()
+            # game.ctx.rect(update['x'] * PIXEL_WIDTH, update['y'] * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
+            # game.ctx.stroke()
+            game.current_field[y][x] = data
+        for i in range(len(game.bots)):
+            bot = game.bots[i]
+            game.ctx.fillStyle = COLORS[game.current_field[bot[1]][bot[0]]]
+
+            game.ctx.fillRect(bot[0] * PIXEL_WIDTH, bot[1] * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
+
+            bot = game.new_bots[i]
+            game.ctx.beginPath()
+            game.ctx.arc(((bot[0] * 2 + 1) * PIXEL_WIDTH) / 2, ((bot[1] * 2 + 1) * PIXEL_WIDTH) / 2, PIXEL_WIDTH / 4, 0,
+                           2 * pi, False)
+            game.ctx.fillStyle = '#263238'
+            game.ctx.closePath()
+            game.ctx.fill()
+        game.bots = game.new_bots
 
     @staticmethod
     def on_initial(data):
@@ -65,12 +80,10 @@ class Game(Singleton):
         Game().current_field = data['field']
         Game().canvas.attrs['height'] = GAME_WIDTH * PIXEL_WIDTH
         Game().canvas.attrs['width'] = GAME_HEIGHT * PIXEL_WIDTH
-        for j in range(GAME_WIDTH):
-            for i in range(GAME_HEIGHT):
-                Game().ctx.beginPath()
-                Game().ctx.rect(i * PIXEL_WIDTH, j * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
-                Game().ctx.fillStyle = COLORS[Game().current_field[i][j]]
-                Game().ctx.fill()
+        for y in range(GAME_WIDTH):
+            for x in range(GAME_HEIGHT):
+                Game().ctx.fillStyle = COLORS[Game().current_field[y][x]]
+                Game().ctx.fillRect(x * PIXEL_WIDTH, y * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
                 # Game().ctx.beginPath()
                 # Game().ctx.rect(i * PIXEL_WIDTH, j * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
                 # Game().ctx.stroke()
