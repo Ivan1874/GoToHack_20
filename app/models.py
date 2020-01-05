@@ -15,6 +15,9 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String())
 
     score = db.Column(db.Integer())
+    code = db.Column(db.String())
+    default_data = db.Column(db.String())
+    last_exception = db.Column(db.String())
 
     is_admin = db.Column(db.Boolean())
 

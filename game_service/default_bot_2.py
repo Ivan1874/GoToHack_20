@@ -23,6 +23,7 @@ def tick(x, y):
                 return Move.Down
             if y == game.height - 1:
                 data[2] = False
+                return Move.Up
 
     elif not data[2]:
         if x > 0:
@@ -48,3 +49,4 @@ def tick(x, y):
                 return Move.Up
             if y == 0:
                 data[2] = True
+                return Move.Down

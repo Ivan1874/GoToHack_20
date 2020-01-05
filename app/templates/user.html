@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block scripts %}
+    {{ super() }}
+    <script type="text/python" src="{{ url_for('send_static', path='py/code_editor.py') }}"></script>
+    <script type="text/javascript" src="{{ url_for('send_static', path='js/ace/ace.js') }}"></script>
+    <script type="text/javascript"
+            src="{{ url_for('send_static', path='js/ace/ext-language_tools.js') }}"></script>
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <style>
+        #editor {
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-center align-items-center w-100">
+        <div class="col-10 flex-column h-100 text-center">
+            <form action="" method="post">
+                {{ form.csrf_token() }}
+                <select class="form-control" id="language" name="language" style="margin: 10px">
+                    {% for choice in form.language.choices %}
+                        <option value="{{ choice[0] }}">{{ choice[1] }}</option>
+                    {% endfor %}
+                </select>
+                <div id="editor" style="margin: 10px">{{ form.code.data }}</div>
+                <textarea name="code" id="code" style="display: none;"></textarea>
+                <div style="display: flex;flex-direction: row;">
+                    <label for="data" class="active" style="width: auto;min-width: max-content;margin: 10px">data = </label>
+                    <textarea rows="1" class="form-control" name="data" id="data" style="display: flex;">{{ form.data.data }}</textarea>
+                </div>
+                <a>Последнее исключение бота:</a>
+                <code id="last_exception">{{ form.last_exception.data }}</code>
+                <br>
+                <input style="margin: 10px" class="btn btn-default" id="submit" type="submit" value="Отправить">
+            </form>
+        </div>
+    </div>
+{% endblock %}

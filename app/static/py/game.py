@@ -26,6 +26,7 @@ class Singleton(object):
 class Game(Singleton):
     canvas = document.getElementById('game')
     score_el = document.getElementById('score')
+    time_el = document.getElementById('time')
     ctx = canvas.getContext('2d')
 
     current_field = []
@@ -36,27 +37,54 @@ class Game(Singleton):
     width = 0
     height = 0
     score = 0
+    time = 0
+    started = False
+
+    @staticmethod
+    def connect(_):
+        Game().socket.disconnect()
+        Game().socket.connect()
 
     def init(self):
-        self.socket.on('connect', lambda: print('Connected'))
-        self.socket.on('initial', self.on_initial)
-        self.socket.on('update', self.on_update)
+        window.bind('visibilitychange', self.visibilitychange)
+        window.bind('show', self.connect)
+        window.bind('fade', self.socket.disconnect)
+        self.init_socket()
+
+    @staticmethod
+    def init_socket():
+        def on_connect():
+            if document.hidden:
+                Game().socket.disconnect()
+                print('Connected, disconnecting')
+            else:
+                print('Connected')
 
         def on_disconnect(arg):
             print('Disconnected')
-            Game().socket = window.io()
-            Game().init()
+            if not document.hidden:
+                Game().socket.disconnect()
+                Game().socket = window.io()
+                Game().socket.connect()
+                Game().init_socket()
 
-        self.socket.on('disconnect', on_disconnect)
-        window.bind('visibilitychange', self.visibilitychange)
-        window.bind('show', self.socket.connect())
-        window.bind('fade', self.socket.disconnect())
+        Game().socket.on('connect', on_connect)
+        Game().socket.on('initial', Game().on_initial)
+        Game().socket.on('update', Game().on_update)
+        Game().socket.on('disconnect', on_disconnect)
 
-        self.socket.connect()
+    @staticmethod
+    def visibilitychange(*_):
+        if document.hidden:
+            Game().socket.disconnect()
+        else:
+            Game().connect(None)
 
     @staticmethod
     def draw_bots():
         game = Game()
+        if not game.started:
+            return
         for bot in game.bots:
             game.ctx.fillStyle = COLORS[game.current_field[bot['y']][bot['x']]]
             game.ctx.fillRect(bot['x'] * PIXEL_WIDTH, bot['y'] * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
@@ -66,14 +94,32 @@ class Game(Singleton):
             game.ctx.arc(((bot['x'] * 2 + 1) * PIXEL_WIDTH) / 2, ((bot['y'] * 2 + 1) * PIXEL_WIDTH) / 2,
                          PIXEL_WIDTH / 4, 0, 2 * pi, False)
             game.ctx.fillStyle = '#263238'
-            game.ctx.closePath()
             game.ctx.fill()
+            if bot['crashed']:
+                game.ctx.lineWidth = 2
+                game.ctx.beginPath()
+                game.ctx.moveTo(bot['x'] * PIXEL_WIDTH + PIXEL_WIDTH / 4, bot['y'] * PIXEL_WIDTH + PIXEL_WIDTH / 4)
+                game.ctx.lineTo(bot['x'] * PIXEL_WIDTH + PIXEL_WIDTH / 4 + PIXEL_WIDTH / 2,
+                                bot['y'] * PIXEL_WIDTH + PIXEL_WIDTH / 4 + PIXEL_WIDTH / 2)
+                game.ctx.stroke()
+                game.ctx.lineWidth = 2
+                game.ctx.beginPath()
+                game.ctx.moveTo(bot['x'] * PIXEL_WIDTH + PIXEL_WIDTH / 4 + PIXEL_WIDTH / 2, 0)
+                game.ctx.lineTo(0, bot['y'] * PIXEL_WIDTH + PIXEL_WIDTH / 4 + PIXEL_WIDTH / 2)
+                game.ctx.stroke()
+        game.bots = game.new_bots
+        game.new_bots = []
 
     @staticmethod
     def draw_score():
         Game().score_el.innerHTML = 'Счет:<br>'
         for bot in Game().bots:
-            Game().score_el.innerHTML += f'{COLORS_HUMAN[bot["color"]]}: {bot["score"]}<br>'
+            if bot['user_id'] == window.user_id:
+                Game().score_el.innerHTML += '<b>'
+            Game().score_el.innerHTML += f'{COLORS_HUMAN[bot["color"]]}: {bot["score"]}'
+            if bot['user_id'] == window.user_id:
+                Game().score_el.innerHTML += '</b>'
+        Game().time_el.innerHTML = f'Осталось времени: <br>{Game().time} сек'
 
     @staticmethod
     def draw(_):
@@ -89,7 +135,6 @@ class Game(Singleton):
             # game.ctx.stroke()
             game.current_field[y][x] = data
         Game().draw_bots()
-        game.bots = game.new_bots
         Game().draw_score()
 
     @staticmethod
@@ -97,9 +142,11 @@ class Game(Singleton):
         data = JSON.parse(data)
         Game().width = data['width']
         Game().height = data['height']
+        Game().bots = data['bots']
         Game().current_field = data['field']
         Game().canvas.attrs['height'] = Game().width * PIXEL_WIDTH
         Game().canvas.attrs['width'] = Game().height * PIXEL_WIDTH
+        Game().started = data['started']
         for y in range(Game().width):
             for x in range(Game().height):
                 Game().ctx.fillStyle = COLORS[Game().current_field[y][x]]
@@ -110,17 +157,12 @@ class Game(Singleton):
         Game().draw_bots()
 
     @staticmethod
-    def visibilitychange(*_):
-        if document.hidden:
-            Game().socket.disconnect()
-        else:
-            Game().socket.connect()
-
-    @staticmethod
     def on_update(data, ack):
         data = JSON.parse(data)
         Game().updates = data['updates']
         Game().new_bots = data['bots']
+        Game().time = data['time']
+        Game().started = data['started']
         window.requestAnimationFrame(Game().draw)
         ack()
 

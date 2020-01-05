@@ -19,7 +19,7 @@
             <link rel="stylesheet" href="{{ url_for('send_static', path='css/fontawesome-all.min.css') }}">
         {% endblock %}
     </head>
-    <body onload="brython()"{% block body_attribs %}{% endblock %}>
+    <body onload="brython(1)"{% block body_attribs %}{% endblock %}>
     {% block body %}
         {% block navbar %}
             <nav class="navbar navbar-default navbar-expand-lg navbar-dark bg-success">
@@ -35,6 +35,7 @@
                             <a class="nav-link" href="{{ url_for('index') }}">Главная</a>
                         </li>
                         {% if not current_user.is_anonymous %}
+                            <li class="nav-item"><a class="nav-link" href="{{ url_for('user') }}">Пользователь</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Выход</a></li>
                         {% else %}
                             <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Войти</a></li>
@@ -58,9 +59,6 @@
             <script type="text/javascript" src="{{ url_for('send_static', path='js/popper.min.js') }}"></script>
             <script type="text/javascript" src="{{ url_for('send_static', path='js/mdb.min.js') }}"></script>
             <script type="text/javascript" src="{{ url_for('send_static', path='js/Notify.js') }}"></script>
-            <script type="text/javascript" src="{{ url_for('send_static', path='js/ace/ace.js') }}"></script>
-            <script type="text/javascript"
-                    src="{{ url_for('send_static', path='js/ace/ext-language_tools.js') }}"></script>
             <script type="text/javascript" src="{{ url_for('send_static', path='js/brython.js') }}"></script>
             <script type="text/javascript" src="{{ url_for('send_static', path='js/brython_stdlib.js') }}"></script>
             <script type="text/javascript" src="{{ url_for('send_static', path='js/socket.io.js') }}"></script>

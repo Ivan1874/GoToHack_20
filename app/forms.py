@@ -8,9 +8,16 @@ from app.models import *
 app.jinja_env.globals['bootstrap_is_hidden_field'] = lambda field: isinstance(field, HiddenField)
 
 
-class IndexForm(FlaskForm):
-    language = SelectField('Выберите язык программирования:', choices=[('cpp', 'C++'), ('python', 'Python 3')])
+class ConfigForm(FlaskForm):
+    language = SelectField('Выберите язык программирования:', choices=[('python', 'Python 3'), ('cpp', 'C++')])
+    code = TextAreaField('editor')
+    data = TextAreaField('data')
+    last_exception = TextAreaField('last_exception')
     submit = SubmitField('Начать игру')
+
+
+class AddBotForm(FlaskForm):
+    submit = SubmitField('Добавить бота в текущую игру')
 
 
 class LoginForm(FlaskForm):

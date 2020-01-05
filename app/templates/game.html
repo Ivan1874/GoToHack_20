@@ -11,12 +11,13 @@
     {{ super() }}
     <script type="text/python" src="{{ url_for('send_static', path='py/game.py') }}"></script>
     <script type="text/javascript">
-        {#window.game_id = {{ game_id }};#}
+        window.user_id = {{ user.id }};
     </script>
 {% endblock %}
 
 
 {% block app_content %}
-    <div class="justify-content-center align-items-center" style="position:absolute; left: 5%"><a id="score">Счет: </a></div>
+    <div class="justify-content-center align-items-center" style="position:absolute; left: 5%; top: 20%"><a id="time">Время: </a></div>
+    <div class="justify-content-center align-items-center" style="position:absolute; left: 5%; top: 40%"><a id="score">Счет: </a></div>
     <canvas id="game"></canvas>
 {% endblock %}
