@@ -85,6 +85,7 @@ class Game(Singleton):
         game = Game()
         if not game.started:
             return
+        print(game.bots, game.current_field)
         for bot in game.bots:
             game.ctx.fillStyle = COLORS[game.current_field[bot['y']][bot['x']]]
             game.ctx.fillRect(bot['x'] * PIXEL_WIDTH, bot['y'] * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
@@ -104,8 +105,9 @@ class Game(Singleton):
                 game.ctx.stroke()
                 game.ctx.lineWidth = 2
                 game.ctx.beginPath()
-                game.ctx.moveTo(bot['x'] * PIXEL_WIDTH + PIXEL_WIDTH / 4 + PIXEL_WIDTH / 2, 0)
-                game.ctx.lineTo(0, bot['y'] * PIXEL_WIDTH + PIXEL_WIDTH / 4 + PIXEL_WIDTH / 2)
+                game.ctx.moveTo(bot['x'] * PIXEL_WIDTH + PIXEL_WIDTH / 4 + PIXEL_WIDTH / 2,
+                                bot['y'] * PIXEL_WIDTH + PIXEL_WIDTH / 4)
+                game.ctx.lineTo(bot['x'] * PIXEL_WIDTH + PIXEL_WIDTH / 4, bot['y'] * PIXEL_WIDTH + PIXEL_WIDTH / 4 + PIXEL_WIDTH / 2)
                 game.ctx.stroke()
         game.bots = game.new_bots
         game.new_bots = []

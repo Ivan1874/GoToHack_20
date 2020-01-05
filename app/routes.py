@@ -46,13 +46,15 @@ def logout():
 default_code = '''def tick(x, y):
     return Move.Up'''
 
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     form = RegisterForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, is_admin=False, score=0, code=default_code, default_data=json.dumps([]))
+        user = User(username=form.username.data, is_admin=False, score=0, code=default_code,
+                    default_data=json.dumps([]))
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
@@ -127,11 +129,16 @@ def game():
 width = 16
 height = 16
 
+
 @app.route('/start_game')
 def start_game():
     Game().init(width, height, 40)
     Game().init_bots()
     Game().started = True
+    socketio.emit('initial', json.dumps({'height': Game().height, 'width': Game().width, 'field': Game().field,
+                                         'bots': [bot.frontend() for bot in Game().bots], 'started': Game().started}))
+    for client in clients:
+        clients[client]['field'] = copy.deepcopy(Game().field)
     return 'OK'
 
 
@@ -163,7 +170,8 @@ def do_update():
                     return socketio._handle_event(ack, None, '/', user, *args)
 
                 socketio.server.emit('update', json.dumps(
-                    {'updates': updates, 'bots': bots_frontend, 'time': game.time_remaining, 'started': Game().started}), namespace='/',
+                    {'updates': updates, 'bots': bots_frontend, 'time': game.time_remaining,
+                     'started': Game().started}), namespace='/',
                                      room=user, skip_sid=None, callback=_callback_wrapper)
                 data['queue'] += updates
         except RuntimeError:
