@@ -10,10 +10,11 @@ def toBorder(m):
 
 
 def tick(x, y):
-    lst = [game.width - 1 - x, game.height - 1 - y, x, y]
+    lst = [game.width - 1 - x, game.width - 1 - y, x, y]
     m = min(lst)
     i = lst.index(m)
     dx = dy = 0
+    direct = x > 0 and get_pixel(y, x - 1) == my_color
     if i == 0:
         dx = 1
     elif i == 1:
@@ -29,7 +30,9 @@ def tick(x, y):
             return Move.Up
         elif x < game.width - 1 and get_pixel(y, x + 1) != my_color:
             return Move.Right
-        elif y < game.height - 1 and get_pixel(y + 1, x) != my_color:
+        elif y < game.height - 1 and get_pixel(y + 1, x) != my_color and direct:
             return Move.Down
         elif x > 0 and get_pixel(y, x - 1) != my_color:
             return Move.Left
+        else:
+            return Move.Down

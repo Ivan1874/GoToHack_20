@@ -48,7 +48,11 @@ class Game(Singleton):
             Game().init()
 
         self.socket.on('disconnect', on_disconnect)
-        window.bind('visibilitychange', self.request_init)
+        window.bind('visibilitychange', self.visibilitychange)
+        window.bind('show', self.socket.connect())
+        window.bind('fade', self.socket.disconnect())
+
+        self.socket.connect()
 
     @staticmethod
     def draw_bots():
@@ -106,17 +110,19 @@ class Game(Singleton):
         Game().draw_bots()
 
     @staticmethod
-    def request_init(*_):
+    def visibilitychange(*_):
         if document.hidden:
-            return
-        Game().socket.emit('request_initial')
+            Game().socket.disconnect()
+        else:
+            Game().socket.connect()
 
     @staticmethod
-    def on_update(data):
+    def on_update(data, ack):
         data = JSON.parse(data)
         Game().updates = data['updates']
         Game().new_bots = data['bots']
         window.requestAnimationFrame(Game().draw)
+        ack()
 
 
 game = Game()

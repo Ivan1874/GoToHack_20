@@ -72,6 +72,8 @@ class Game(Singleton):
                                  code=open('game_service/default_bot_1.py', 'r').read(), score=1))
             self.bots.append(Bot(x=self.width - 1, y=self.height - 1, data=[False, False], color='B',
                                  code=open('bots/bot999.py', 'r').read(), score=1))
+            self.bots.append(Bot(x=0, y=self.height - 1, data=[True, True, True], color='C',
+                                 code=open('game_service/default_bot_2.py', 'r').read(), score=1))
             for bot in self.bots:
                 self.field[bot.y][bot.x] = bot.color
                 self.bot_color_map[bot.color] = bot

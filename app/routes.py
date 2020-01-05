@@ -82,6 +82,13 @@ def game():
 clients = {}
 
 
+def ack():
+    data = clients[request.sid]
+    q = data['queue']
+    for i in q:
+        data['field'][i[1]][i[0]] = i[2]
+
+
 def do_update():
     game = Game()
     game.tick()
@@ -95,17 +102,21 @@ def do_update():
                     if game.field[y][x] != data['field'][y][x]:
                         updates.append((x, y, game.field[y][x]))
 
-            socketio.emit('update', json.dumps({'updates': updates, 'bots': bots_frontend}), room=user)
-            data['field'] = copy.deepcopy(game.field)
+            def _callback_wrapper(*args):
+                return socketio._handle_event(ack, None, '/', user, *args)
+
+            socketio.server.emit('update', json.dumps({'updates': updates, 'bots': bots_frontend}), namespace='/',
+                                 room=user, skip_sid=None, callback=_callback_wrapper)
+            data['queue'] += updates
     except RuntimeError:
         print('Err')
-    Timer(0.5, lambda: eventlet.spawn(do_update)).start()
+    Timer(0.1, lambda: eventlet.spawn(do_update)).start()
 
 
 @socketio.on('connect')
 def handle_message():
     emit('initial', json.dumps({'height': Game().height, 'width': Game().width, 'field': Game().field}))
-    clients[request.sid] = {'field': copy.deepcopy(Game().field)}
+    clients[request.sid] = {'field': copy.deepcopy(Game().field), 'queue': []}
 
 
 @socketio.on('request_initial')
