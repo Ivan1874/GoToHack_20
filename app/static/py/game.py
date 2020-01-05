@@ -8,9 +8,12 @@ COLORS = {'A': '#c62828',
           'C': '#43a047',
           'D': '#f57c00',
           '0': '#aaaaaa'}
-PIXEL_WIDTH = 30
-GAME_WIDTH = 0
-GAME_HEIGHT = 0
+COLORS_HUMAN = {'A': 'Красный',
+                'B': 'Синий',
+                'C': 'Зелёный',
+                'D': 'Оранжевый',
+                '0': 'Серый'}
+PIXEL_WIDTH = 20
 
 
 class Singleton(object):
@@ -22,6 +25,7 @@ class Singleton(object):
 
 class Game(Singleton):
     canvas = document.getElementById('game')
+    score_el = document.getElementById('score')
     ctx = canvas.getContext('2d')
 
     current_field = []
@@ -29,7 +33,9 @@ class Game(Singleton):
     bots = []
     new_bots = []
     socket = window.io()
-    req_update = False
+    width = 0
+    height = 0
+    score = 0
 
     def init(self):
         self.socket.on('connect', lambda: print('Connected'))
@@ -42,6 +48,28 @@ class Game(Singleton):
             Game().init()
 
         self.socket.on('disconnect', on_disconnect)
+        window.bind('visibilitychange', self.request_init)
+
+    @staticmethod
+    def draw_bots():
+        game = Game()
+        for bot in game.bots:
+            game.ctx.fillStyle = COLORS[game.current_field[bot['y']][bot['x']]]
+            game.ctx.fillRect(bot['x'] * PIXEL_WIDTH, bot['y'] * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
+
+        for bot in game.new_bots:
+            game.ctx.beginPath()
+            game.ctx.arc(((bot['x'] * 2 + 1) * PIXEL_WIDTH) / 2, ((bot['y'] * 2 + 1) * PIXEL_WIDTH) / 2,
+                         PIXEL_WIDTH / 4, 0, 2 * pi, False)
+            game.ctx.fillStyle = '#263238'
+            game.ctx.closePath()
+            game.ctx.fill()
+
+    @staticmethod
+    def draw_score():
+        Game().score_el.innerHTML = 'Счет:<br>'
+        for bot in Game().bots:
+            Game().score_el.innerHTML += f'{COLORS_HUMAN[bot["color"]]}: {bot["score"]}<br>'
 
     @staticmethod
     def draw(_):
@@ -56,37 +84,32 @@ class Game(Singleton):
             # game.ctx.rect(update['x'] * PIXEL_WIDTH, update['y'] * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
             # game.ctx.stroke()
             game.current_field[y][x] = data
-        for i in range(len(game.bots)):
-            bot = game.bots[i]
-            game.ctx.fillStyle = COLORS[game.current_field[bot[1]][bot[0]]]
-
-            game.ctx.fillRect(bot[0] * PIXEL_WIDTH, bot[1] * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
-
-            bot = game.new_bots[i]
-            game.ctx.beginPath()
-            game.ctx.arc(((bot[0] * 2 + 1) * PIXEL_WIDTH) / 2, ((bot[1] * 2 + 1) * PIXEL_WIDTH) / 2, PIXEL_WIDTH / 4, 0,
-                           2 * pi, False)
-            game.ctx.fillStyle = '#263238'
-            game.ctx.closePath()
-            game.ctx.fill()
+        Game().draw_bots()
         game.bots = game.new_bots
+        Game().draw_score()
 
     @staticmethod
     def on_initial(data):
-        global GAME_WIDTH, GAME_HEIGHT
         data = JSON.parse(data)
-        GAME_WIDTH = data['width']
-        GAME_HEIGHT = data['height']
+        Game().width = data['width']
+        Game().height = data['height']
         Game().current_field = data['field']
-        Game().canvas.attrs['height'] = GAME_WIDTH * PIXEL_WIDTH
-        Game().canvas.attrs['width'] = GAME_HEIGHT * PIXEL_WIDTH
-        for y in range(GAME_WIDTH):
-            for x in range(GAME_HEIGHT):
+        Game().canvas.attrs['height'] = Game().width * PIXEL_WIDTH
+        Game().canvas.attrs['width'] = Game().height * PIXEL_WIDTH
+        for y in range(Game().width):
+            for x in range(Game().height):
                 Game().ctx.fillStyle = COLORS[Game().current_field[y][x]]
                 Game().ctx.fillRect(x * PIXEL_WIDTH, y * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
                 # Game().ctx.beginPath()
                 # Game().ctx.rect(i * PIXEL_WIDTH, j * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH)
                 # Game().ctx.stroke()
+        Game().draw_bots()
+
+    @staticmethod
+    def request_init(*_):
+        if document.hidden:
+            return
+        Game().socket.emit('request_initial')
 
     @staticmethod
     def on_update(data):
@@ -94,7 +117,6 @@ class Game(Singleton):
         Game().updates = data['updates']
         Game().new_bots = data['bots']
         window.requestAnimationFrame(Game().draw)
-        Game().req_update = False
 
 
 game = Game()
