@@ -132,7 +132,7 @@ height = 16
 
 @app.route('/start_game')
 def start_game():
-    Game().init(width, height, 40)
+    Game().init(width, height, 200)
     Game().init_bots()
     Game().started = True
     socketio.emit('initial', json.dumps({'height': Game().height, 'width': Game().width, 'field': Game().field,

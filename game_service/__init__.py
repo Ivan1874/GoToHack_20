@@ -97,7 +97,7 @@ class Game(Singleton):
             if self.field[bot.dict.y][bot.dict.x] != bot.dict.color:
                 bot.dict.score += 1
                 if self.field[bot.dict.y][bot.dict.x] != '0':
-                    self.bot_color_map[self.field[bot.dict.y][bot.dict.x]].score -= 1
+                    self.bot_color_map[self.field[bot.dict.y][bot.dict.x]].dict.score -= 1
             self.field[bot.dict.y][bot.dict.x] = bot.dict.color
         self.time_remaining -= 1
 
